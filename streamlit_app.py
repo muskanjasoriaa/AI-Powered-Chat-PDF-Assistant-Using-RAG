@@ -9,6 +9,19 @@ from langchain_openai import ChatOpenAI
 
 st.title("AI PDF Chat Assistant")
 
+# Retrieve API Key from sidebar or Secrets
+openai_api_key = st.sidebar.text_input("OpenAI API Key", type="password")
+if not openai_api_key:
+    # Try to load from Streamlit Secrets
+    try:
+        openai_api_key = st.secrets["OPENAI_API_KEY"]
+    except Exception:
+        pass
+
+if not openai_api_key:
+    st.info("Please enter your OpenAI API Key in the sidebar to proceed.")
+    st.stop()
+
 uploaded_files = st.file_uploader(
     "Upload PDFs",
     type="pdf",
@@ -27,7 +40,8 @@ if uploaded_files:
     )
 
     llm = ChatOpenAI(
-        model="gpt-4o-mini"
+        model="gpt-4o-mini",
+        api_key=openai_api_key
     )
 
     qa = get_qa_chain(llm, vectorstore)

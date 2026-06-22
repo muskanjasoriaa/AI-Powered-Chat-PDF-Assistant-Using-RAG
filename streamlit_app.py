@@ -1,3 +1,45 @@
+import os
+import ssl
+
+# Globally disable SSL certificate verification in Python standard library
+try:
+    ssl._create_default_https_context = ssl._create_unverified_context
+except Exception:
+    pass
+
+# Disable warnings about unverified HTTPS requests
+import urllib3
+try:
+    urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+except Exception:
+    pass
+
+# Patch httpx to disable SSL verification
+try:
+    import httpx
+    original_httpx_init = httpx.Client.__init__
+    def patched_httpx_init(self, *args, **kwargs):
+        kwargs['verify'] = False
+        original_httpx_init(self, *args, **kwargs)
+    httpx.Client.__init__ = patched_httpx_init
+except Exception:
+    pass
+
+# Patch requests to disable SSL verification
+try:
+    import requests
+    original_requests_init = requests.Session.__init__
+    def patched_requests_init(self, *args, **kwargs):
+        original_requests_init(self, *args, **kwargs)
+        self.verify = False
+    requests.Session.__init__ = patched_requests_init
+except Exception:
+    pass
+
+os.environ["HF_HUB_DISABLE_SSL_VERIFICATION"] = "1"
+os.environ["CURL_CA_BUNDLE"] = ""
+os.environ["PYTHONHTTPSVERIFY"] = "0"
+
 import streamlit as st
 from utils.pdf_loader import extract_text
 from utils.text_splitter import split_text
